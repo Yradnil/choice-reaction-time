@@ -25,7 +25,12 @@ class Player(BasePlayer):
 
 
 # PAGES
-class MyPage(Page):
+class Introduction(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        return player.round_number == 1
+
+class Task(Page):
     pass
 
 
@@ -37,4 +42,4 @@ class Results(Page):
     pass
 
 
-page_sequence = [MyPage, ResultsWaitPage, Results]
+page_sequence = [Introduction, Task, ResultsWaitPage, Results]
