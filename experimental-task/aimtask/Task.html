@@ -42,7 +42,7 @@ Task
 
     #startBtn {
         position: absolute;
-        top: 50%;
+        top: 60%;
         left: 50%;
         transform: translate(-50%, -50%);
         font-size: 24px;
@@ -52,6 +52,7 @@ Task
         color: white;
         border: none;
         border-radius: 8px;
+        z-index: 10000;
     }
 
     #settings {
@@ -64,7 +65,7 @@ Task
 
     #result {
         position: absolute;
-        top: 50%;
+        top: 40%;
         left: 50%;
         transform: translate(-50%, -50%);
         background: #222;
@@ -92,8 +93,8 @@ Task
             <span id="choiceValue">4</span> targets
         </div>
 
-        <button id="startBtn" type="button">Start Aim Trainer</button>
         <div id="result"></div>
+        <button id="startBtn" type="button">Start Aim Trainer</button>
     </div>
 
     <script>
