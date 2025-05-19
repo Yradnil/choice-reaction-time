@@ -1,9 +1,142 @@
 {{ block title }}
-    Page title
+Task
 {{ endblock }}
 {{ block content }}
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: sans-serif;
+        background: white;
+        color: #111;
+        border: 5px solid red;
+    }
+
+    #game {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: white;
+        z-index: 9999;
+    }
+
+    .target {
+        position: absolute;
+        background: #005000;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 18px;
+        z-index: 10;
+    }
+
+    #startBtn {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        padding: 10px 20px;
+        cursor: pointer;
+        background-color: #333;
+        color: white;
+        border: none;
+        border-radius: 8px;
+    }
+</style>
+</head>
+
+<body>
+
+    <div id="game">
+        <div id="info">Targets hit: 0 | Time: 0.00s</div>
+        <button id="startBtn" type="button">Start Aim Trainer</button>
+    </div>
+
+    <script>
+        const game = document.getElementById("game");
+        const info = document.getElementById("info");
+        const startBtn = document.getElementById("startBtn");
+
+        let targetsHit = 0;
+        let startTime = 0;
+        let target = null;
+        const totalTargets = 30;
+
+        function random(pMin, pMax) {
+            return (Math.random() * (pMax - pMin + 1)) + pMin;
+        }
+
+        function spawnTarget() {
+            if (target) target.remove();
+
+            const newTarget = document.createElement("div");
+            newTarget.classList.add("target");
+
+            const gameRect = game.getBoundingClientRect();
+
+            const targetSize = random(30, 100);
+            newTarget.style.width = `${targetSize}px`;
+            newTarget.style.height = `${targetSize}px`;
+            const marginRatio = 0.05;
+
+            const minX = gameRect.width * marginRatio;
+            const maxX = gameRect.width * (1 - marginRatio) - targetSize;
+
+            const minY = gameRect.height * marginRatio;
+            const maxY = gameRect.height * (1 - marginRatio) - targetSize;
+
+            const x = random(minX, maxX);
+            const y = random(minY,maxY)
+
+            newTarget.style.left = `${x}px`;
+            newTarget.style.top = `${y}px`;
+
+            newTarget.addEventListener("click", () => {
+                targetsHit++;
+                updateInfo();
+                if (targetsHit < totalTargets) {
+                    spawnTarget();
+                } else {
+                    endGame();
+                }
+            });
+
+            game.appendChild(newTarget);
+            target = newTarget;
+        }
+
+        function updateInfo() {
+            const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+            info.textContent = `Targets hit: ${targetsHit} | Time: ${elapsed}s`;
+        }
+
+        function endGame() {
+            if (target) target.remove();
+            const totalTime = ((performance.now() - startTime) / 1000).toFixed(2);
+            alert(`You hit ${totalTargets} targets in ${totalTime} seconds!`);
+            startBtn.style.display = "block";
+        }
+
+        startBtn.addEventListener("click", () => {
+            targetsHit = 0;
+            startTime = performance.now();
+            startBtn.style.display = "none";
+            updateInfo();
+            spawnTarget();
+        });
+    </script>
 
     {{ formfields }}
-    {{ next_button }}
 
-{{ endblock }}
+
+    {{ endblock }}

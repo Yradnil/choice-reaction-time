@@ -26,9 +26,7 @@ class Player(BasePlayer):
 
 # PAGES
 class Introduction(Page):
-    @staticmethod
-    def is_displayed(player: Player):
-        return player.round_number == 1
+    pass
 
 class Task(Page):
     pass
