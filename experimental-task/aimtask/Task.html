@@ -42,6 +42,21 @@ Task
 
     #startBtn {
         position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        padding: 10px 20px;
+        cursor: pointer;
+        background-color: #333;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        z-index: 10000;
+    }
+
+    #nextBtn {
+        position: absolute;
         top: 60%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -52,6 +67,7 @@ Task
         color: white;
         border: none;
         border-radius: 8px;
+        display: none;
         z-index: 10000;
     }
 
@@ -95,12 +111,14 @@ Task
 
         <div id="result"></div>
         <button id="startBtn" type="button">Start Aim Trainer</button>
+        <button id="nextBtn">Next</button>
     </div>
 
     <script>
         const game = document.getElementById("game");
         const info = document.getElementById("info");
         const startBtn = document.getElementById("startBtn");
+        const nextBtn = document.getElementById("nextBtn");
         const result = document.getElementById("result");
 
         const durationSlider = document.getElementById("durationSlider");
@@ -197,6 +215,7 @@ Task
             result.innerHTML = `You hit ${targetsHit} targets in ${gameDuration} seconds!`;
             result.style.display = "block";
             startBtn.style.display = "block";
+            nextBtn.style.display = "block";
         }
 
         startBtn.addEventListener("click", () => {
@@ -207,6 +226,7 @@ Task
 
             startBtn.style.display = "none";
             result.style.display = "none";
+            nextBtn.style.display = "none";
 
             updateInfo();
             spawnTargets();
@@ -221,6 +241,4 @@ Task
     </script>
 
     {{ formfields }}
-
-
     {{ endblock }}
