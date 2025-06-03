@@ -135,6 +135,7 @@ Task
         let numChoices = 4;
         let intervalId = null;
         let endTime = null;
+        let trialIndex = 0;
 
         //this will store the timestamp when each red target spawns
         let lastSpawnTime = null;
@@ -200,18 +201,56 @@ Task
                     // record the spawn time, so we can compute RT when clicked
                     lastSpawnTime = performance.now();
 
-                    newTarget.addEventListener("click", () => {
-                        // compute reaction time (ms)
+                    newTarget.addEventListener("click", (event) => {
                         const responseTime = performance.now() - lastSpawnTime;
                         targetsHit++;
                         updateInfo();
 
-                        // <-- send this RT via liveSend -->
-                        liveSend({ response_time: responseTime });
+                        // Send response_time
+                        liveSend({ response_time: responseTime, trial_index: trialIndex });
 
-                        // spawn the next set of targets
+                        // Use current mouse position as center of the 50px circle
+                        const clickX = event.clientX;
+                        const clickY = event.clientY;
+
+                        // Create the visible circle
+                        const circle = document.createElement("div");
+                        circle.style.position = "fixed";
+                        circle.style.width = "50px";
+                        circle.style.height = "50px";
+                        circle.style.border = "2px dashed blue";
+                        circle.style.borderRadius = "50%";
+                        circle.style.pointerEvents = "none";
+                        circle.style.left = `${clickX - 25}px`;
+                        circle.style.top = `${clickY - 25}px`;
+                        circle.style.zIndex = "10001";
+                        circle.style.backgroundColor = "rgba(0, 0, 255, 0.05)";
+                        document.body.appendChild(circle);
+
+                        const rtStartTime = performance.now();
+
+                        function onMove(e) {
+                            const dx = e.clientX - clickX;
+                            const dy = e.clientY - clickY;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+
+                            if (dist > 25) {
+                                const rtLeave = performance.now() - rtStartTime;
+                                liveSend({ leave_time: rtLeave, trial_index: trialIndex });
+
+                                document.body.removeChild(circle);
+                                window.removeEventListener("mousemove", onMove);
+
+                                trialIndex++;  // increment only after reaction time is captured
+                            }
+                        }
+
+                        window.addEventListener("mousemove", onMove);
+
+                        // Spawn next set of targets immediately (unrelated to the circle)
                         spawnTargets();
                     });
+
                 } else {
                     newTarget.style.background = "#005000";
                 }
@@ -258,4 +297,4 @@ Task
     </script>
 
     {% formfields %}
-{% endblock %}
+    {% endblock %}

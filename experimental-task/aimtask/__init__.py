@@ -18,7 +18,7 @@ class Group(BaseGroup):
 
 class Player(BasePlayer):
     # store a JSON‐encoded list of all reaction times (in milliseconds)
-    response_times_json = models.LongStringField(blank=True, null=True)
+    timings_json = models.LongStringField(blank=True, null=True)
 
 # PAGES
 class Introduction(Page):
@@ -28,19 +28,30 @@ class Task(Page):
     @staticmethod
     def live_method(player: Player, data):
         rt = data.get('response_time')
-        if rt is None:
-            return
+        reactionT = data.get('leave_time')
+        idx = data.get('trial_index')
 
-        # Safely get the current value of the field
-        raw_json = player.field_maybe_none('response_times_json')
+        if idx is None:
+            return  # must have trial index
 
+        idx = str(idx)
+
+        raw = player.field_maybe_none('timings_json')
         try:
-            existing = json.loads(raw_json) if raw_json else []
+            existing = json.loads(raw) if raw else {}
         except json.JSONDecodeError:
-            existing = []
+            existing = {}
 
-        existing.append(rt)
-        player.response_times_json = json.dumps(existing)
+        # Initialize if not present
+        if idx not in existing:
+            existing[idx] = {}
+
+        if rt is not None:
+            existing[idx]["response_time"] = rt
+        if reactionT is not None:
+            existing[idx]["reaction_time"] = reactionT
+
+        player.timings_json = json.dumps(existing)
 
 
 class ResultsWaitPage(WaitPage):
