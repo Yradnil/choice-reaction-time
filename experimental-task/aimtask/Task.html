@@ -1,7 +1,11 @@
-{{ block title }}
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
 Task
-{{ endblock }}
-{{ block content }}
+{% endblock %}
+
+{% block content %}
 <style>
     html,
     body {
@@ -27,7 +31,6 @@ Task
 
     .target {
         position: absolute;
-        background: #005000;
         border-radius: 50%;
         cursor: pointer;
     }
@@ -133,6 +136,9 @@ Task
         let intervalId = null;
         let endTime = null;
 
+        //this will store the timestamp when each red target spawns
+        let lastSpawnTime = null;
+
         durationSlider.addEventListener("input", () => {
             durationValue.textContent = durationSlider.value;
         });
@@ -162,7 +168,7 @@ Task
             const minY = gameRect.height * marginRatio;
             const maxY = gameRect.height * (1 - marginRatio) - targetSize;
 
-            const positions = []; // positions of our targets
+            const positions = []; // store existing positions to prevent overlap
 
             for (let i = 0; i < numChoices; i++) {
                 const newTarget = document.createElement("div");
@@ -170,8 +176,8 @@ Task
 
                 newTarget.style.width = `${targetSize}px`;
                 newTarget.style.height = `${targetSize}px`;
-                
-                // overlap check
+
+                // find a non‐overlapping (x,y) for this circle
                 let x, y, attempts = 0;
                 do {
                     x = random(minX, maxX);
@@ -187,16 +193,27 @@ Task
                 newTarget.style.left = `${x}px`;
                 newTarget.style.top = `${y}px`;
 
-                // First one the real target
+                // The first element in this loop is the “real” (red) target
                 if (i === 0) {
-                    newTarget.style.background = "red"; 
+                    newTarget.style.background = "red";
+
+                    // record the spawn time, so we can compute RT when clicked
+                    lastSpawnTime = performance.now();
+
                     newTarget.addEventListener("click", () => {
+                        // compute reaction time (ms)
+                        const responseTime = performance.now() - lastSpawnTime;
                         targetsHit++;
                         updateInfo();
-                        spawnTargets(); // the moment it was clicked we refresh
+
+                        // <-- send this RT via liveSend -->
+                        liveSend({ response_time: responseTime });
+
+                        // spawn the next set of targets
+                        spawnTargets();
                     });
                 } else {
-                    newTarget.style.background = "#005000"; 
+                    newTarget.style.background = "#005000";
                 }
 
                 game.appendChild(newTarget);
@@ -236,9 +253,9 @@ Task
                 if (performance.now() >= endTime) {
                     endGame();
                 }
-            }, 50); //50 milliseconds updates
+            }, 50); // update info every 50 ms
         });
     </script>
 
-    {{ formfields }}
-    {{ endblock }}
+    {% formfields %}
+{% endblock %}

@@ -7,6 +7,12 @@ SESSION_CONFIGS = [
         app_sequence=['aimtask'],
         num_demo_participants=1,
     ),
+    dict(
+        name='choiceReactionTask',
+        display_name="ChoiceReactionTask",
+        app_sequence=['choiceReactionTask'],
+        num_demo_participants=1,
+    ),
 ]
 
 # if you set a property in SESSION_CONFIG_DEFAULTS, it will be inherited by all configs
