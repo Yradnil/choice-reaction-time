@@ -28,6 +28,8 @@ class Player(BasePlayer):
 class MyPage(Page):
     pass
 
+class CRTmultipleColors(Page):
+    pass
 
 class ResultsWaitPage(WaitPage):
     pass
@@ -37,4 +39,4 @@ class Results(Page):
     pass
 
 
-page_sequence = [MyPage, ResultsWaitPage, Results]
+page_sequence = [CRTmultipleColors, ResultsWaitPage, Results]
