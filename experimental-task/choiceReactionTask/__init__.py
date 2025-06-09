@@ -21,14 +21,26 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
-    pass
+    timings_json = models.LongStringField(blank=True, null=True)
 
 
 # PAGES
-class MyPage(Page):
+class CrtOneColor(Page):
     pass
 
-class CRTmultipleColors(Page):
+class CrtMultipleColors(Page):
+    pass
+
+class CrtRtSart(Page):
+    pass
+
+class ReactionTime(Page):
+    pass
+
+class Sart(Page):
+    pass
+
+class CrtSartDistractor(Page):
     pass
 
 class ResultsWaitPage(WaitPage):
@@ -39,4 +51,4 @@ class Results(Page):
     pass
 
 
-page_sequence = [CRTmultipleColors, ResultsWaitPage, Results]
+page_sequence = [ReactionTime, ResultsWaitPage, Results]

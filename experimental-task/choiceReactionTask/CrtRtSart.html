@@ -1,5 +1,5 @@
 {{ block title }}
-Choice Reaction Time Distractor
+Choice Reaction Time RT SART
 {{ endblock }}
 {{ block content }}
 
@@ -57,6 +57,7 @@ Choice Reaction Time Distractor
       text-align: center;
     }
 
+
     .circle-button.active {
       background-color: #005000;
     }
@@ -84,6 +85,9 @@ Choice Reaction Time Distractor
 
     const centerCircle = document.getElementById('center-circle');
 
+    const colors = ['#d9534f', '#f0ad4e', '#5bc0de', '#9370DB']; // red, orange, blue, purple
+    const green = '#005000';
+
     const centerX = 200;
     const centerY = 330;
     const radius = 160;
@@ -103,6 +107,15 @@ Choice Reaction Time Distractor
     });
 
     let activeIndex = -1;
+    let acceptingInput = false;
+    let currentColor = '';
+
+    function resetCircles() {
+      circleElements.forEach(circle => {
+        circle.classList.remove('active');
+        circle.style.backgroundColor = 'gray';
+      });
+    }
 
     function showMessage(text) {
       centerCircle.innerText = text;
@@ -111,55 +124,53 @@ Choice Reaction Time Distractor
       }, 1000);
     }
 
-    function getRandomIndex() {
-      return Math.floor(Math.random() * circleElements.length);
+    function sartCycle() {
+      resetCircles();
+      acceptingInput = false;
+
+      activeIndex = Math.floor(Math.random() * circleElements.length);
+      const showGreen = Math.random() < 0.2; // 20% chance for green (adjust as needed)
+
+      const chosenColor = showGreen ? green : colors[Math.floor(Math.random() * colors.length)];
+      currentColor = chosenColor;
+
+      const activeCircle = circleElements[activeIndex];
+      activeCircle.style.backgroundColor = chosenColor;
+      activeCircle.classList.add('active');
+
+      acceptingInput = showGreen;
+
+      setTimeout(sartCycle, 2000);
     }
 
-    function highlightRandomCircle() {
-      circleElements.forEach(circle => {
-        circle.classList.remove('active');
-        circle.style.backgroundColor = 'gray';
-      });
-
-      const colors = ['#d9534f', '#f0ad4e', '#5bc0de', '#9370DB'];
-
-      activeIndex = getRandomIndex();
-
-      circleElements[activeIndex].classList.add('active');
-      circleElements[activeIndex].style.backgroundColor = '#005000'; // green
-
-      const otherIndices = circleElements.map((_, i) => i).filter(i => i !== activeIndex);
-      const shuffledColors = colors.sort(() => Math.random() - 0.5);
-
-      otherIndices.forEach((index, i) => {
-        circleElements[index].style.backgroundColor = shuffledColors[i];
-      });
+    function handleResponse(index) {
+      if (!acceptingInput) {
+        showMessage('Wrong!');
+      } else if (index === activeIndex) {
+        showMessage('Correct!');
+        acceptingInput = false;
+        resetCircles();
+      } else {
+        showMessage('Wrong!');
+      }
     }
 
+    // Mouse input
     circleElements.forEach((circle, index) => {
       circle.addEventListener('click', () => {
-        if (index === activeIndex) {
-          showMessage('Correct!');
-          highlightRandomCircle();
-        } else {
-          showMessage('Wrong!');
-        }
+        handleResponse(index);
       });
     });
 
+    // Keyboard input
     document.addEventListener('keydown', (e) => {
       const key = parseInt(e.key);
       if (!isNaN(key) && key >= 1 && key <= 5) {
-        if (key - 1 === activeIndex) {
-          showMessage('Correct!');
-          highlightRandomCircle();
-        } else {
-          showMessage('Wrong!');
-        }
+        handleResponse(key - 1);
       }
     });
 
-    highlightRandomCircle();
+    sartCycle(); // Start test
   </script>
 </body>
 

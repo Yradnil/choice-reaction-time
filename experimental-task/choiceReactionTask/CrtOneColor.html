@@ -1,5 +1,5 @@
 {{ block title }}
-Choice Reaction Time Distractor
+Choice Reaction On Color
 {{ endblock }}
 {{ block content }}
 
@@ -116,24 +116,11 @@ Choice Reaction Time Distractor
     }
 
     function highlightRandomCircle() {
-      circleElements.forEach(circle => {
-        circle.classList.remove('active');
-        circle.style.backgroundColor = 'gray';
-      });
-
-      const colors = ['#d9534f', '#f0ad4e', '#5bc0de', '#9370DB'];
-
+      if (activeIndex !== -1) {
+        circleElements[activeIndex].classList.remove('active');
+      }
       activeIndex = getRandomIndex();
-
       circleElements[activeIndex].classList.add('active');
-      circleElements[activeIndex].style.backgroundColor = '#005000'; // green
-
-      const otherIndices = circleElements.map((_, i) => i).filter(i => i !== activeIndex);
-      const shuffledColors = colors.sort(() => Math.random() - 0.5);
-
-      otherIndices.forEach((index, i) => {
-        circleElements[index].style.backgroundColor = shuffledColors[i];
-      });
     }
 
     circleElements.forEach((circle, index) => {
