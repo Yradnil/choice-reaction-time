@@ -103,6 +103,8 @@ Choice Reaction Time Distractor
     });
 
     let activeIndex = -1;
+    let stimulusTime = null;
+    let trialIndex = 0;
 
     function showMessage(text) {
       centerCircle.innerText = text;
@@ -127,6 +129,7 @@ Choice Reaction Time Distractor
 
       circleElements[activeIndex].classList.add('active');
       circleElements[activeIndex].style.backgroundColor = '#005000'; // green
+      stimulusTime = performance.now(); // record time of appearance
 
       const otherIndices = circleElements.map((_, i) => i).filter(i => i !== activeIndex);
       const shuffledColors = colors.sort(() => Math.random() - 0.5);
@@ -136,26 +139,43 @@ Choice Reaction Time Distractor
       });
     }
 
+    function recordReaction(index) {
+      const responseTime = performance.now() - stimulusTime;
+
+      // Send data to server
+      liveSend({
+        trial_index: trialIndex,
+        clicked_index: index,
+        is_correct: index === activeIndex,
+        reaction_time: responseTime.toFixed(2)
+      });
+
+      trialIndex += 1;
+    }
+
     circleElements.forEach((circle, index) => {
       circle.addEventListener('click', () => {
         if (index === activeIndex) {
           showMessage('Correct!');
-          highlightRandomCircle();
         } else {
           showMessage('Wrong!');
         }
+        recordReaction(index)
+        highlightRandomCircle();
       });
     });
 
     document.addEventListener('keydown', (e) => {
       const key = parseInt(e.key);
       if (!isNaN(key) && key >= 1 && key <= 5) {
-        if (key - 1 === activeIndex) {
+        handleResponse(key - 1);
+        if (index === activeIndex) {
           showMessage('Correct!');
-          highlightRandomCircle();
         } else {
           showMessage('Wrong!');
         }
+        recordReaction(index);
+        highlightRandomCircle();
       }
     });
 
