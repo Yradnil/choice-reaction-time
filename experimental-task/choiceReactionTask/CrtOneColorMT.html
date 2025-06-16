@@ -47,7 +47,6 @@ Choice Reaction On Color
       background-color: white;
       border: none;
       cursor: default;
-      pointer-events: none;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -103,8 +102,12 @@ Choice Reaction On Color
     });
 
     let activeIndex = -1;
+    let holding = false;
+    let canClick = false;
+    let holdTimeout;
+    let stimulusShownAt = null;
+    let releaseTime = null;
     let trialIndex = 0;
-    let stimulusTime = null;
 
     function showMessage(text) {
       centerCircle.innerText = text;
@@ -117,57 +120,123 @@ Choice Reaction On Color
       return Math.floor(Math.random() * circleElements.length);
     }
 
+    function resetCircles() {
+      circleElements.forEach(circle => {
+        circle.classList.remove('active');
+        circle.style.backgroundColor = 'gray';
+      });
+      activeIndex = -1;
+      canClick = false;
+    }
+
     function highlightRandomCircle() {
-      if (activeIndex !== -1) {
-        circleElements[activeIndex].classList.remove('active');
-      }
+      resetCircles();
       activeIndex = getRandomIndex();
       circleElements[activeIndex].classList.add('active');
-
-      stimulusTime = performance.now(); // save timestamp when shown
+      circleElements[activeIndex].style.backgroundColor = '#005000';
+      canClick = true;
+      stimulusShownAt = performance.now(); // mark when green appears
     }
 
-    function recordReaction(index) {
-      const responseTime = performance.now() - stimulusTime;
-
-      // Send data to server
-      liveSend({
-        trial_index: trialIndex,
-        clicked_index: index,
-        is_correct: index === activeIndex,
-        reaction_time: responseTime.toFixed(2)
-      });
-
-      trialIndex += 1;
+    function resetGame() {
+      resetCircles();
+      centerCircle.style.backgroundColor = 'white';
+      holding = false;
+      canClick = false;
+      stimulusShownAt = null;
+      releaseTime = null;
     }
+
+    // Track hold/release on center
+    centerCircle.style.pointerEvents = 'auto';
+    centerCircle.style.cursor = 'pointer';
+
+    centerCircle.addEventListener('mousedown', () => {
+      if (holding || canClick) return;
+      holding = true;
+      centerCircle.style.backgroundColor = 'gray';
+
+      holdTimeout = setTimeout(() => {
+        if (holding) {
+          highlightRandomCircle();
+        }
+      }, 1000);
+    });
+
+    centerCircle.addEventListener('mouseup', () => {
+      if (!canClick) {
+        showMessage('Too early!');
+        resetGame();
+        return;
+      }
+      holding = false;
+      clearTimeout(holdTimeout);
+      centerCircle.style.backgroundColor = 'white';
+
+      // Record reaction time on release
+      if (stimulusShownAt) {
+        releaseTime = performance.now();
+        const reactionTime = releaseTime - stimulusShownAt;
+        liveSend({
+          trial_index: trialIndex,
+          reaction_time: reactionTime.toFixed(2)
+        });
+      }
+    });
 
     circleElements.forEach((circle, index) => {
       circle.addEventListener('click', () => {
-        if (index === activeIndex) {
-          showMessage('Correct!');
-        } else {
-          showMessage('Wrong!');
+        if (!canClick) {
+          showMessage('Not yet!');
+          return;
         }
-        recordReaction(index);
-        highlightRandomCircle();
+
+        const movementTime = releaseTime ? (performance.now() - releaseTime) : null;
+
+        const correct = index === activeIndex;
+        showMessage(correct ? 'Correct!' : 'Wrong!');
+
+        liveSend({
+          trial_index: trialIndex,
+          movement_time: movementTime ? movementTime.toFixed(2) : null,
+          clicked_index: index,
+          is_correct: correct
+        });
+
+        trialIndex++;
+        setTimeout(() => {
+          resetGame();
+        }, 500);
       });
     });
 
+    // Optional keyboard support
     document.addEventListener('keydown', (e) => {
       const key = parseInt(e.key);
       if (!isNaN(key) && key >= 1 && key <= 5) {
         const index = key - 1;
-        if (index === activeIndex) {
-          showMessage('Correct!');
-        } else {
-          showMessage('Wrong!');
+        if (!canClick) {
+          showMessage('Not yet!');
+          return;
         }
-        recordReaction(index);
-        highlightRandomCircle();
+
+        const movementTime = releaseTime ? (performance.now() - releaseTime) : null;
+        const correct = index === activeIndex;
+        showMessage(correct ? 'Correct!' : 'Wrong!');
+
+        liveSend({
+          trial_index: trialIndex,
+          movement_time: movementTime ? movementTime.toFixed(2) : null,
+          clicked_index: index,
+          is_correct: correct
+        });
+
+        trialIndex++;
+        setTimeout(() => {
+          resetGame();
+        }, 500);
       }
     });
-
-    highlightRandomCircle();
   </script>
 </body>
 

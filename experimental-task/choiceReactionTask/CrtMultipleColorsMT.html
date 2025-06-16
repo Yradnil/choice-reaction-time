@@ -1,5 +1,5 @@
 {{ block title }}
-Choice Reaction On Color
+Choice Reaction Time Distractor with movement time
 {{ endblock }}
 {{ block content }}
 
@@ -47,7 +47,6 @@ Choice Reaction On Color
       background-color: white;
       border: none;
       cursor: default;
-      pointer-events: none;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -55,6 +54,10 @@ Choice Reaction On Color
       font-size: 12px;
       color: black;
       text-align: center;
+    }
+
+    #center-circle:active {
+      background-color: #ccc;
     }
 
     .circle-button.active {
@@ -103,8 +106,9 @@ Choice Reaction On Color
     });
 
     let activeIndex = -1;
-    let trialIndex = 0;
-    let stimulusTime = null;
+    let holding = false;
+    let canClick = false;
+    let holdTimeout;
 
     function showMessage(text) {
       centerCircle.innerText = text;
@@ -117,57 +121,103 @@ Choice Reaction On Color
       return Math.floor(Math.random() * circleElements.length);
     }
 
+    function resetCircles() {
+      circleElements.forEach(circle => {
+        circle.classList.remove('active');
+        circle.style.backgroundColor = 'gray';
+      });
+      activeIndex = -1;
+      canClick = false;
+    }
+
     function highlightRandomCircle() {
-      if (activeIndex !== -1) {
-        circleElements[activeIndex].classList.remove('active');
-      }
+      resetCircles();
+
+      const colors = ['#d9534f', '#f0ad4e', '#5bc0de', '#9370DB'];
       activeIndex = getRandomIndex();
       circleElements[activeIndex].classList.add('active');
+      circleElements[activeIndex].style.backgroundColor = '#005000';
 
-      stimulusTime = performance.now(); // save timestamp when shown
-    }
+      const otherIndices = circleElements.map((_, i) => i).filter(i => i !== activeIndex);
+      const shuffledColors = colors.sort(() => Math.random() - 0.5);
 
-    function recordReaction(index) {
-      const responseTime = performance.now() - stimulusTime;
-
-      // Send data to server
-      liveSend({
-        trial_index: trialIndex,
-        clicked_index: index,
-        is_correct: index === activeIndex,
-        reaction_time: responseTime.toFixed(2)
+      otherIndices.forEach((index, i) => {
+        circleElements[index].style.backgroundColor = shuffledColors[i];
       });
 
-      trialIndex += 1;
+      canClick = true;
     }
 
+    // User clicks the center circle and holds
+    centerCircle.addEventListener('mousedown', () => {
+      if (holding || canClick) return;
+      holding = true;
+      centerCircle.style.backgroundColor = 'gray';
+
+      holdTimeout = setTimeout(() => {
+        if (holding) {
+          highlightRandomCircle();
+        }
+      }, 1000); // time required to hold (1s)
+    });
+
+    // User releases the center circle
+    centerCircle.addEventListener('mouseup', () => {
+      if (!canClick) {
+        showMessage('Too early!');
+        resetGame();
+      }
+      holding = false;
+      clearTimeout(holdTimeout);
+      centerCircle.style.backgroundColor = 'white';
+    });
+
+    function resetGame() {
+      resetCircles();
+      centerCircle.style.backgroundColor = 'white';
+      holding = false;
+      canClick = false;
+      activeIndex = -1;
+    }
+
+    // Handle circle clicks
     circleElements.forEach((circle, index) => {
       circle.addEventListener('click', () => {
-        if (index === activeIndex) {
+        if (!canClick) {
+          showMessage('Not yet!');
+          return;
+        }
+        if (index === activeIndex && !holding) {
           showMessage('Correct!');
+          setTimeout(() => {
+            resetGame();
+          }, 500);
         } else {
           showMessage('Wrong!');
+          resetGame();
         }
-        recordReaction(index);
-        highlightRandomCircle();
       });
     });
 
+    // Optional: also support keys 1–5
     document.addEventListener('keydown', (e) => {
       const key = parseInt(e.key);
       if (!isNaN(key) && key >= 1 && key <= 5) {
-        const index = key - 1;
-        if (index === activeIndex) {
+        if (!canClick) {
+          showMessage('Not yet!');
+          return;
+        }
+        if (key - 1 === activeIndex && !holding) {
           showMessage('Correct!');
+          setTimeout(() => {
+            resetGame();
+          }, 500);
         } else {
           showMessage('Wrong!');
+          resetGame();
         }
-        recordReaction(index);
-        highlightRandomCircle();
       }
     });
-
-    highlightRandomCircle();
   </script>
 </body>
 

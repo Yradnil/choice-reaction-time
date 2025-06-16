@@ -1,7 +1,5 @@
-{{ block title }}
-Choice Reaction Time RT SART
-{{ endblock }}
-{{ block content }}
+{{ block title }} Choice Reaction Time RT SART {{ endblock }} {{ block content
+}}
 
 <head>
   <meta charset="UTF-8" />
@@ -47,7 +45,6 @@ Choice Reaction Time RT SART
       background-color: white;
       border: none;
       cursor: default;
-      pointer-events: none;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -56,7 +53,6 @@ Choice Reaction Time RT SART
       color: black;
       text-align: center;
     }
-
 
     .circle-button.active {
       background-color: #005000;
@@ -76,17 +72,17 @@ Choice Reaction Time RT SART
 
   <script>
     const circleElements = [
-      document.getElementById('circle1'),
-      document.getElementById('circle2'),
-      document.getElementById('circle3'),
-      document.getElementById('circle4'),
-      document.getElementById('circle5')
+      document.getElementById("circle1"),
+      document.getElementById("circle2"),
+      document.getElementById("circle3"),
+      document.getElementById("circle4"),
+      document.getElementById("circle5"),
     ];
 
-    const centerCircle = document.getElementById('center-circle');
+    const centerCircle = document.getElementById("center-circle");
 
-    const colors = ['#d9534f', '#f0ad4e', '#5bc0de', '#9370DB'];
-    const green = '#005000';
+    const colors = ["#d9534f", "#f0ad4e", "#5bc0de", "#9370DB"];
+    const green = "#005000";
 
     const centerX = 200;
     const centerY = 330;
@@ -99,7 +95,7 @@ Choice Reaction Time RT SART
     const circles = [...circleElements].reverse();
 
     circles.forEach((circle, i) => {
-      const angle = startAngle + (i * spread / (circles.length - 1));
+      const angle = startAngle + (i * spread) / (circles.length - 1);
       const x = centerX + radius * Math.cos(angle) - 30;
       const y = centerY - radius * Math.sin(angle) - 30;
       circle.style.left = `${x}px`;
@@ -108,91 +104,123 @@ Choice Reaction Time RT SART
 
     let activeIndex = -1;
     let acceptingInput = false;
-    let currentColor = '';
-    let stimulusTime = null;
-    let trialIndex = 0;
+    let currentColor = "";
+    let stimulusTimeout = null;
+    let responseTimeout = null;
+    let cycleStarted = false;
+    let holding = false;
+    let trialInProgress = false;
 
     function resetCircles() {
-      circleElements.forEach(circle => {
-        circle.classList.remove('active');
-        circle.style.backgroundColor = 'gray';
+      circleElements.forEach((circle) => {
+        circle.classList.remove("active");
+        circle.style.backgroundColor = "gray";
       });
+      activeIndex = -1;
+      acceptingInput = false;
+      cycleStarted = false;
+      trialInProgress = false;
+      clearTimeout(stimulusTimeout);
+      clearTimeout(responseTimeout);
+      centerCircle.style.backgroundColor = "white";
     }
 
     function showMessage(text) {
       centerCircle.innerText = text;
       setTimeout(() => {
-        centerCircle.innerText = '';
+        centerCircle.innerText = "";
       }, 1000);
     }
 
-    function sartCycle() {
-      resetCircles();
-      acceptingInput = false;
-      stimulusTime = null;
-
+    function showStimulus() {
       activeIndex = Math.floor(Math.random() * circleElements.length);
       const showGreen = Math.random() < 0.2;
-
-      const chosenColor = showGreen ? green : colors[Math.floor(Math.random() * colors.length)];
-      currentColor = chosenColor;
+      currentColor = showGreen
+        ? green
+        : colors[Math.floor(Math.random() * colors.length)];
 
       const activeCircle = circleElements[activeIndex];
-      activeCircle.style.backgroundColor = chosenColor;
-      activeCircle.classList.add('active');
+      activeCircle.style.backgroundColor = currentColor;
+      activeCircle.classList.add("active");
+
+      acceptingInput = showGreen;
+      centerCircle.style.backgroundColor = "white";
+
+      trialInProgress = true;
 
       if (showGreen) {
-        stimulusTime = performance.now(); // start timing
+        // User has 2 seconds to respond
+        responseTimeout = setTimeout(() => {
+          if (acceptingInput) {
+            showMessage("Wrong!");
+            endTrial();
+          }
+        }, 2000);
       }
-
-      setTimeout(sartCycle, 2000);
-    }
-
-    function recordResponse(index) {
-      if (stimulusTime !== null) {
-        const rt = performance.now() - stimulusTime;
-        const correct = index === activeIndex;
-
-        liveSend({
-          trial_index: trialIndex,
-          clicked_index: index,
-          reaction_time: rt.toFixed(2),
-          is_correct: correct
-        });
-      }
-      trialIndex += 1;
     }
 
     function handleResponse(index) {
-      if (index === activeIndex) {
-        showMessage('Correct!');
+      if (!trialInProgress) return;
+
+      if (!acceptingInput) {
+        showMessage("Wrong!");
+      } else if (index === activeIndex) {
+        showMessage("Correct!");
       } else {
-        showMessage('Wrong!');
+        showMessage("Wrong!");
       }
 
-      recordResponse(index);
-      acceptingInput = false;
-      resetCircles();
+      endTrial();
     }
 
+    function endTrial() {
+      acceptingInput = false;
+      trialInProgress = false;
+      clearTimeout(responseTimeout);
+
+      setTimeout(() => {
+        resetCircles();
+      }, 500); // small delay before clearing
+    }
+
+    // Response via click
     circleElements.forEach((circle, index) => {
-      circle.addEventListener('click', () => {
+      circle.addEventListener("click", () => {
         handleResponse(index);
       });
     });
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener("keydown", (e) => {
       const key = parseInt(e.key);
       if (!isNaN(key) && key >= 1 && key <= 5) {
         handleResponse(key - 1);
       }
     });
 
-    sartCycle();
+    centerCircle.style.pointerEvents = "auto";
+    centerCircle.style.cursor = "pointer";
+
+    centerCircle.addEventListener("mousedown", () => {
+      if (cycleStarted || trialInProgress) return;
+
+      holding = true;
+      cycleStarted = true;
+      centerCircle.style.backgroundColor = "gray";
+
+      const delay = 1000 + Math.random() * 1000;
+      stimulusTimeout = setTimeout(() => {
+        if (holding) {
+          showStimulus();
+        } else {
+          cycleStarted = false;
+        }
+      }, delay);
+    });
+
+    centerCircle.addEventListener("mouseup", () => {
+      holding = false;
+    });
   </script>
 </body>
 
-{{ formfields }}
-{{ next_button }}
-
-{{ endblock }}
+{{ formfields }} {{ next_button }} {{ endblock }}
