@@ -107,7 +107,7 @@
     let currentColor = "";
     let stimulusTimeout = null;
     let responseTimeout = null;
-    let cycleStarted = false;
+    let cycleInterval = null;
     let holding = false;
     let trialInProgress = false;
 
@@ -118,11 +118,14 @@
       });
       activeIndex = -1;
       acceptingInput = false;
-      cycleStarted = false;
       trialInProgress = false;
+      currentColor = "";
       clearTimeout(stimulusTimeout);
       clearTimeout(responseTimeout);
-      centerCircle.style.backgroundColor = "white";
+
+      if (!holding) {
+        centerCircle.style.backgroundColor = "white";
+      }
     }
 
     function showMessage(text) {
@@ -133,6 +136,7 @@
     }
 
     function showStimulus() {
+      resetCircles(); // Clear previous stimulus
       activeIndex = Math.floor(Math.random() * circleElements.length);
       const showGreen = Math.random() < 0.2;
       currentColor = showGreen
@@ -144,16 +148,13 @@
       activeCircle.classList.add("active");
 
       acceptingInput = showGreen;
-      centerCircle.style.backgroundColor = "white";
-
       trialInProgress = true;
 
       if (showGreen) {
-        // User has 2 seconds to respond
         responseTimeout = setTimeout(() => {
           if (acceptingInput) {
-            showMessage("Wrong!");
-            endTrial();
+            showMessage("Missed!");
+            stopCycle();
           }
         }, 2000);
       }
@@ -164,26 +165,43 @@
 
       if (!acceptingInput) {
         showMessage("Wrong!");
+        stopCycle();
       } else if (index === activeIndex) {
         showMessage("Correct!");
+        stopCycle();
       } else {
         showMessage("Wrong!");
+        stopCycle();
       }
-
-      endTrial();
     }
 
-    function endTrial() {
-      acceptingInput = false;
-      trialInProgress = false;
+    function stopCycle() {
+      clearInterval(cycleInterval);
       clearTimeout(responseTimeout);
+      trialInProgress = false;
+      acceptingInput = false;
+      holding = false;
+      centerCircle.style.backgroundColor = "white";
 
       setTimeout(() => {
         resetCircles();
-      }, 500); // small delay before clearing
+      }, 500);
     }
 
-    // Response via click
+    function startStimulusCycle() {
+      if (cycleInterval) clearInterval(cycleInterval);
+
+      showStimulus(); // First immediately
+      cycleInterval = setInterval(() => {
+        if (!holding) {
+          stopCycle();
+          return;
+        }
+        showStimulus();
+      }, 2500); // Interval between stimuli
+    }
+
+    // Event listeners
     circleElements.forEach((circle, index) => {
       circle.addEventListener("click", () => {
         handleResponse(index);
@@ -201,26 +219,28 @@
     centerCircle.style.cursor = "pointer";
 
     centerCircle.addEventListener("mousedown", () => {
-      if (cycleStarted || trialInProgress) return;
-
+      if (holding) return;
       holding = true;
-      cycleStarted = true;
       centerCircle.style.backgroundColor = "gray";
 
       const delay = 1000 + Math.random() * 1000;
       stimulusTimeout = setTimeout(() => {
         if (holding) {
-          showStimulus();
-        } else {
-          cycleStarted = false;
+          startStimulusCycle();
         }
       }, delay);
     });
 
     centerCircle.addEventListener("mouseup", () => {
       holding = false;
+      // Only stop if no stimulus has been shown yet
+      if (!trialInProgress) {
+        stopCycle();
+      }
     });
   </script>
 </body>
 
-{{ formfields }} {{ next_button }} {{ endblock }}
+{{ formfields }}
+{{ next_button }}
+{{ endblock }}

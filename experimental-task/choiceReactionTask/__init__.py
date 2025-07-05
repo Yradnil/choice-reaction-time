@@ -229,4 +229,4 @@ class SartMT(Page):
     pass
 
 
-page_sequence = [Sart, ResultsWaitPage, Results]
+page_sequence = [CrtSartDistractor, ResultsWaitPage, Results]

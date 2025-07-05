@@ -102,10 +102,13 @@ Choice Reaction Time Distractor
       circle.style.top = `${y}px`;
     });
 
-    const COLORS = ['#d9534f', '#f0ad4e', '#5bc0de', '#9370DB', '#005000'];
+    const COLORS = ['#d9534f', '#f0ad4e', '#5bc0de', '#9370DB'];
     const GREEN = '#005000';
-    let activeColors = [];
-    let inputEnabled = true;
+
+    let activeIndex = -1;
+    let inputEnabled = false;
+    let missTimeout = null;
+    let roundTimeout = null;
 
     function showMessage(text) {
       centerCircle.innerText = text;
@@ -115,51 +118,74 @@ Choice Reaction Time Distractor
     }
 
     function highlightAllCircles() {
-      activeColors = [];
+      clearTimeout(missTimeout);
+      clearTimeout(roundTimeout);
+      inputEnabled = false;
+      activeIndex = -1;
+
+      // Reset all circles
+      circles.forEach((circle) => {
+        circle.style.backgroundColor = 'gray';
+        circle.classList.remove('active');
+      });
+
+      const showGreen = Math.random() < 0.2; // 20% chance to show green
+
+      if (showGreen) {
+        activeIndex = Math.floor(Math.random() * circles.length);
+      }
 
       circles.forEach((circle, i) => {
-        const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        const color = (i === activeIndex && showGreen)
+          ? GREEN
+          : COLORS[Math.floor(Math.random() * COLORS.length)];
         circle.style.backgroundColor = color;
         circle.classList.add('active');
-        activeColors[i] = color;
       });
 
       inputEnabled = true;
-    }
 
-    function isGreen(index) {
-      return activeColors[index] === GREEN;
+      if (showGreen) {
+        missTimeout = setTimeout(() => {
+          if (inputEnabled) {
+            showMessage("Missed!");
+            inputEnabled = false;
+          }
+        }, 2000);
+      }
+
+      roundTimeout = setTimeout(highlightAllCircles, 2000);
     }
 
     function handleResponse(index) {
       if (!inputEnabled) return;
 
       inputEnabled = false;
+      clearTimeout(missTimeout);
 
-      if (isGreen(index)) {
-        showMessage('Correct!');
+      const reversedIndex = circleElements.length - 1 - index;
+
+      if (reversedIndex === activeIndex) {
+        showMessage("Correct!");
       } else {
-        showMessage('Wrong!');
+        showMessage("Wrong!");
       }
     }
 
+    // Attach click and key handlers
     circleElements.forEach((circle, index) => {
-      circle.addEventListener('click', () => {
-        handleResponse(index);
-      });
+      circle.addEventListener("click", () => handleResponse(index));
     });
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener("keydown", (e) => {
       const key = parseInt(e.key);
       if (!isNaN(key) && key >= 1 && key <= 5) {
-        const index = key - 1;
-        handleResponse(index);
+        handleResponse(key - 1);
       }
     });
 
-    // Start auto rounds
-    highlightAllCircles(); // First round immediately
-    setInterval(highlightAllCircles, 2000); // Next every 2 sec
+    // Start first round
+    highlightAllCircles();
   </script>
 </body>
 

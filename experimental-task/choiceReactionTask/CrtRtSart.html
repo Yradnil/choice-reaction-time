@@ -164,7 +164,9 @@ Choice Reaction Time RT SART
     }
 
     function handleResponse(index) {
-      if (index === activeIndex) {
+      const correct = (index === activeIndex) && (currentColor === green);
+
+      if (correct) {
         showMessage('Correct!');
       } else {
         showMessage('Wrong!');
