@@ -98,6 +98,10 @@ Reaction Time movement time
     let holding = false;
     let timeoutId = null;
     let canClick = false;
+    let trialIndex = 0;
+    let rt = 0;
+    let rtStartTime = 0;
+    let lastClick = performance.now();
 
     // Position the hold button below the center circle
     holdButton.style.top = '270px';
@@ -122,6 +126,7 @@ Reaction Time movement time
       const delay = Math.random() * 6000 + 1000; // 1000–7000 ms
       timeoutId = setTimeout(() => {
         if (holding) {
+          rtStartTime = performance.now();
           centerCircle.style.backgroundColor = '#005000'; // green
           isGreen = true;
           waiting = false;
@@ -147,6 +152,9 @@ Reaction Time movement time
     });
 
     holdButton.addEventListener('mouseup', () => {
+      lastClick = performance.now();
+      const rtLeave = performance.now() - rtStartTime
+      liveSend({ leave_time: rtLeave, trial_index: trialIndex });
       if (!isGreen) {
         showMessage('Too early!');
         resetTrial();
@@ -155,21 +163,19 @@ Reaction Time movement time
     });
 
     centerCircle.addEventListener('click', () => {
+      rt = performance.now() - lastClick;
       if (isGreen && canClick) {
+        liveSend({ response_time: rt, trial_index: trialIndex });
         showMessage('Correct!');
         resetTrial();
       } else if (!isGreen && waiting) {
+        liveSend({ response_time: rt, trial_index: trialIndex });
         showMessage('Too soon!');
         resetTrial();
       }
+      trialIndex++;
     });
 
-    document.addEventListener('keydown', (e) => {
-      if ((e.key === ' ' || e.key === 'Enter') && isGreen && canClick) {
-        showMessage('Correct!');
-        resetTrial();
-      }
-    });
   </script>
 </body>
 

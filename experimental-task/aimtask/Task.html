@@ -137,9 +137,14 @@ Task
         let endTime = null;
         let trialIndex = 0;
 
-        //this will store the timestamp when each red target spawns
-        let lastSpawnTime = null;
+        let lastSpawnTime = null;   // this will store the timestamp when each red target spawns
 
+        // starts the game
+        startBtn.addEventListener("click", () => {
+            startGame();
+        });
+
+        // below we have slider eventlisteners updaeting in realtime with what game settings we want to start with
         durationSlider.addEventListener("input", () => {
             durationValue.textContent = durationSlider.value;
         });
@@ -161,7 +166,7 @@ Task
 
             const gameRect = game.getBoundingClientRect();
             const targetSize = random(30, 80);
-            const marginRatio = 0.05;
+            const marginRatio = 0.05; //5% inside the game rectangle
 
             const minX = gameRect.width * marginRatio;
             const maxX = gameRect.width * (1 - marginRatio) - targetSize;
@@ -189,16 +194,16 @@ Task
                         Math.hypot(pos.x - x, pos.y - y) < targetSize * 1.1
                     ) && attempts < 50
                 );
-                positions.push({ x, y });
+                positions.push({ x, y }); //adds coordinates into our array
 
                 newTarget.style.left = `${x}px`;
                 newTarget.style.top = `${y}px`;
 
-                // The first element in this loop is the “real” (red) target
+                // The first element in this loop is the actual target
                 if (i === 0) {
                     newTarget.style.background = "red";
 
-                    // record the spawn time, so we can compute RT when clicked
+                    // record the spawn time, so we can compute response time when clicked
                     lastSpawnTime = performance.now();
 
                     newTarget.addEventListener("click", (event) => {
@@ -209,7 +214,7 @@ Task
                         // Send response_time
                         liveSend({ response_time: responseTime, trial_index: trialIndex });
 
-                        // Use current mouse position as center of the 50px circle
+                        // below we create a dotted circle to check if the reaction time circle is working
                         const clickX = event.clientX;
                         const clickY = event.clientY;
 
@@ -247,7 +252,7 @@ Task
 
                         window.addEventListener("mousemove", onMove);
 
-                        // Spawn next set of targets immediately (unrelated to the circle)
+                        // Spawn next set of targets immediately after actual target was clicked
                         spawnTargets();
                     });
 
@@ -274,7 +279,7 @@ Task
             nextBtn.style.display = "block";
         }
 
-        startBtn.addEventListener("click", () => {
+        function startGame() {
             targetsHit = 0;
             gameDuration = parseInt(durationSlider.value);
             numChoices = parseInt(choiceSlider.value);
@@ -293,7 +298,7 @@ Task
                     endGame();
                 }
             }, 50); // update info every 50 ms
-        });
+        }
     </script>
 
     {% formfields %}

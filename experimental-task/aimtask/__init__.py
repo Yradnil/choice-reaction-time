@@ -29,12 +29,10 @@ class Task(Page):
     def live_method(player: Player, data):
         rt = data.get('response_time')
         reactionT = data.get('leave_time')
-        idx = data.get('trial_index')
+        idx = str(data.get('trial_index'))
 
         if idx is None:
             return  # must have trial index
-
-        idx = str(idx)
 
         raw = player.field_maybe_none('timings_json')
         try:

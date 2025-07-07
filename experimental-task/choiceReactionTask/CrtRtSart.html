@@ -130,12 +130,10 @@ Choice Reaction Time RT SART
       resetCircles();
       acceptingInput = false;
       stimulusTime = null;
-      stimulusTime = null;
 
       activeIndex = Math.floor(Math.random() * circleElements.length);
       const showGreen = Math.random() < 0.2;
   
-
       const chosenColor = showGreen ? green : colors[Math.floor(Math.random() * colors.length)];
       currentColor = chosenColor;
 
@@ -146,26 +144,8 @@ Choice Reaction Time RT SART
       if (showGreen) {
         stimulusTime = performance.now(); // start timing
       }
-      if (showGreen) {
-        stimulusTime = performance.now(); // start timing
-      }
 
       setTimeout(sartCycle, 2000);
-    }
-
-    function recordResponse(index) {
-      if (stimulusTime !== null) {
-        const rt = performance.now() - stimulusTime;
-        const correct = index === activeIndex;
-
-        liveSend({
-          trial_index: trialIndex,
-          clicked_index: index,
-          reaction_time: rt.toFixed(2),
-          is_correct: correct
-        });
-      }
-      trialIndex += 1;
     }
 
     function recordResponse(index) {
@@ -196,9 +176,6 @@ Choice Reaction Time RT SART
       acceptingInput = false;
       resetCircles();
 
-      recordResponse(index);
-      acceptingInput = false;
-      resetCircles();
     }
 
     circleElements.forEach((circle, index) => {
@@ -214,7 +191,6 @@ Choice Reaction Time RT SART
       }
     });
 
-    sartCycle();
     sartCycle();
   </script>
 </body>

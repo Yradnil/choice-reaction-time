@@ -208,11 +208,12 @@ class CrtRtSartMT(Page):
 class ReactionTimeMT(Page):
     @staticmethod
     def live_method(player: Player, data):
+        rt = data.get('response_time')
+        reactionT = data.get('leave_time')
         idx = str(data.get('trial_index'))
-        rt = data.get('reaction_time')
 
-        if idx is None or rt is None:
-            return
+        if idx is None:
+            return  # must have trial index
 
         raw = player.field_maybe_none('timings_json')
         try:
@@ -220,14 +221,19 @@ class ReactionTimeMT(Page):
         except json.JSONDecodeError:
             existing = {}
 
+        # Initialize if not present
         if idx not in existing:
             existing[idx] = {}
 
-        existing[idx]['reaction_time'] = rt
+        if rt is not None:
+            existing[idx]["response_time"] = rt
+        if reactionT is not None:
+            existing[idx]["reaction_time"] = reactionT
+
         player.timings_json = json.dumps(existing)
         
 class SartMT(Page):
     pass
 
 
-page_sequence = [CrtSartDistractor, ResultsWaitPage, Results]
+page_sequence = [ReactionTimeMT, ResultsWaitPage, Results]
