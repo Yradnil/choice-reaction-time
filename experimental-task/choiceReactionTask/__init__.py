@@ -54,60 +54,8 @@ class CrtOneColor(Page):
         })
 
         player.timings_json = json.dumps(existing)
-    @staticmethod
-    def live_method(player: Player, data):
-        idx = str(data.get('trial_index'))
-        rt = data.get('reaction_time')
-        is_correct = data.get('is_correct')
-        clicked = data.get('clicked_index')
-
-        if idx is None or rt is None:
-            return
-
-        raw = player.field_maybe_none('timings_json')
-        try:
-            existing = json.loads(raw) if raw else {}
-        except json.JSONDecodeError:
-            existing = {}
-
-        if idx not in existing:
-            existing[idx] = {}
-
-        existing[idx].update({
-            'reaction_time': rt,
-            'is_correct': is_correct,
-            'clicked_index': clicked
-        })
-
-        player.timings_json = json.dumps(existing)
 
 class CrtMultipleColors(Page):
-    @staticmethod
-    def live_method(player: Player, data):
-        idx = str(data.get('trial_index'))
-        rt = data.get('reaction_time')
-        correct = data.get('is_correct')
-        clicked = data.get('clicked_index')
-
-        if idx is None or rt is None:
-            return
-
-        raw = player.field_maybe_none('timings_json')
-        try:
-            existing = json.loads(raw) if raw else {}
-        except json.JSONDecodeError:
-            existing = {}
-
-        if idx not in existing:
-            existing[idx] = {}
-
-        existing[idx].update({
-            'reaction_time': rt,
-            'is_correct': correct,
-            'clicked_index': clicked
-        })
-
-        player.timings_json = json.dumps(existing)
     @staticmethod
     def live_method(player: Player, data):
         idx = str(data.get('trial_index'))
@@ -162,32 +110,6 @@ class CrtRtSart(Page):
         })
 
         player.timings_json = json.dumps(existing)
-    @staticmethod
-    def live_method(player: Player, data):
-        idx = str(data.get('trial_index'))
-        rt = data.get('reaction_time')
-        correct = data.get('is_correct')
-        clicked = data.get('clicked_index')
-
-        if idx is None or rt is None:
-            return
-
-        raw = player.field_maybe_none('timings_json')
-        try:
-            existing = json.loads(raw) if raw else {}
-        except json.JSONDecodeError:
-            existing = {}
-
-        if idx not in existing:
-            existing[idx] = {}
-
-        existing[idx].update({
-            'reaction_time': rt,
-            'is_correct': correct,
-            'clicked_index': clicked
-        })
-
-        player.timings_json = json.dumps(existing)
 
 class ReactionTime(Page):
     @staticmethod
@@ -209,50 +131,8 @@ class ReactionTime(Page):
 
         existing[idx]['reaction_time'] = rt
         player.timings_json = json.dumps(existing)
-    @staticmethod
-    def live_method(player: Player, data):
-        idx = str(data.get('trial_index'))
-        rt = data.get('reaction_time')
-
-        if idx is None or rt is None:
-            return
-
-        raw = player.field_maybe_none('timings_json')
-        try:
-            existing = json.loads(raw) if raw else {}
-        except json.JSONDecodeError:
-            existing = {}
-
-        if idx not in existing:
-            existing[idx] = {}
-
-        existing[idx]['reaction_time'] = rt
-        player.timings_json = json.dumps(existing)
 
 class Sart(Page):
-    @staticmethod
-    def live_method(player: Player, data):
-        idx = str(data.get('trial_index'))
-        rt = data.get('reaction_time')
-        correct = data.get('is_correct')
-
-        if idx is None:
-            return
-
-        raw = player.field_maybe_none('timings_json')
-        try:
-            existing = json.loads(raw) if raw else {}
-        except json.JSONDecodeError:
-            existing = {}
-
-        if idx not in existing:
-            existing[idx] = {}
-
-        if rt is not None:
-            existing[idx]['reaction_time'] = rt
-        existing[idx]['is_correct'] = correct
-
-        player.timings_json = json.dumps(existing)
     @staticmethod
     def live_method(player: Player, data):
         idx = str(data.get('trial_index'))
