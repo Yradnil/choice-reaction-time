@@ -3,65 +3,7 @@ Choice Reaction Time Multiple Colors
 {{ endblock }}
 {{ block content }}
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Choice Reaction Task</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f0f0f0;
-    }
-
-    .circle-container {
-      position: relative;
-      width: 400px;
-      height: 400px;
-    }
-
-    .circle-button {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 24px;
-      font-weight: bold;
-      color: #000;
-      border: 1px solid #333;
-      background-color: gray;
-      cursor: pointer;
-      position: absolute;
-      transition: background-color 0.3s;
-    }
-
-    #center-circle {
-      top: 300px;
-      left: 170px;
-      width: 60px;
-      height: 60px;
-      background-color: white;
-      border: none;
-      cursor: default;
-      pointer-events: none;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-      font-size: 12px;
-      color: black;
-      text-align: center;
-    }
-
-    .circle-button.active {
-      background-color: #005000;
-    }
-  </style>
-</head>
+<link rel="stylesheet" href="{{ static 'myapp/style.css' }}">
 
 <body>
   <div class="circle-container">

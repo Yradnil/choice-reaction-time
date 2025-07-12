@@ -3,45 +3,8 @@ SART
 {{ endblock }}
 {{ block content }}
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SART Reaction Test</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f0f0f0;
-    }
-
-    .circle-container {
-      position: relative;
-      width: 400px;
-      height: 400px;
-    }
-
-    .circle-button {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 24px;
-      font-weight: bold;
-      color: #000;
-      border: 1px solid #333;
-      background-color: gray;
-      position: absolute;
-      top: 170px;
-      left: 170px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-  </style>
-</head>
+{% load otree static %}
+<link rel="stylesheet" href="{% static 'global/style1.css' %}"/>
 
 <body>
   <div class="circle-container">

@@ -112,6 +112,10 @@ Choice Reaction Time RT SART movement time
     let cycleInterval = null;
     let holding = false;
     let trialInProgress = false;
+    let trialIndex = 0;
+    let rtStartTime = 0;
+    let lastClick = performance.now(); 
+    let rt = 0;
 
     function resetCircles() {
       circleElements.forEach((circle) => {
@@ -153,6 +157,7 @@ Choice Reaction Time RT SART movement time
       trialInProgress = true;
 
       if (showGreen) {
+        rtStartTime = performance.now();
         responseTimeout = setTimeout(() => {
           if (acceptingInput) {
             showMessage("Missed!");
@@ -163,12 +168,15 @@ Choice Reaction Time RT SART movement time
     }
 
     function handleResponse(index) {
+      rt = performance.now() - lastClick;
       if (!trialInProgress) return;
 
       if (!acceptingInput) {
         showMessage("Wrong!");
         stopCycle();
       } else if (index === activeIndex) {
+        liveSend({ leave_time: rt, trial_index: trialIndex });
+        trialIndex++;
         showMessage("Correct!");
         stopCycle();
       } else {
@@ -234,6 +242,9 @@ Choice Reaction Time RT SART movement time
     });
 
     centerCircle.addEventListener("mouseup", () => {
+      lastClick = performance.now();
+      const rtLeave = performance.now() - rtStartTime
+      liveSend({ leave_time: rtLeave, trial_index: trialIndex });
       holding = false;
       // Only stop if no stimulus has been shown yet
       if (!trialInProgress) {

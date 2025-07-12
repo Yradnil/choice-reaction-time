@@ -105,9 +105,10 @@ Choice Reaction On Color movement time
     let holding = false;
     let canClick = false;
     let holdTimeout;
-    let stimulusShownAt = null;
-    let releaseTime = null;
     let trialIndex = 0;
+    let rt = 0;
+    let rtStartTime = 0;
+    let lastClick = performance.now(); 
 
     function showMessage(text) {
       centerCircle.innerText = text;
@@ -135,7 +136,7 @@ Choice Reaction On Color movement time
       circleElements[activeIndex].classList.add('active');
       circleElements[activeIndex].style.backgroundColor = '#005000';
       canClick = true;
-      stimulusShownAt = performance.now(); // mark when green appears
+      rtStartTime = performance.now();
     }
 
     function resetGame() {
@@ -143,8 +144,6 @@ Choice Reaction On Color movement time
       centerCircle.style.backgroundColor = 'white';
       holding = false;
       canClick = false;
-      stimulusShownAt = null;
-      releaseTime = null;
     }
 
     // Track hold/release on center
@@ -175,12 +174,9 @@ Choice Reaction On Color movement time
 
       // Record reaction time on release
       if (stimulusShownAt) {
-        releaseTime = performance.now();
-        const reactionTime = releaseTime - stimulusShownAt;
-        liveSend({
-          trial_index: trialIndex,
-          reaction_time: reactionTime.toFixed(2)
-        });
+        lastClick = performance.now();
+        const rtLeave = performance.now() - rtStartTime
+        liveSend({ leave_time: rtLeave, trial_index: trialIndex });
       }
     });
 
@@ -190,53 +186,19 @@ Choice Reaction On Color movement time
           showMessage('Not yet!');
           return;
         }
-
-        const movementTime = releaseTime ? (performance.now() - releaseTime) : null;
-
         const correct = index === activeIndex;
         showMessage(correct ? 'Correct!' : 'Wrong!');
-
-        liveSend({
-          trial_index: trialIndex,
-          movement_time: movementTime ? movementTime.toFixed(2) : null,
-          clicked_index: index,
-          is_correct: correct
-        });
-
-        trialIndex++;
+        if (correct) {
+          rt = performance.now() - lastClick;
+          liveSend({ leave_time: rt, trial_index: trialIndex });
+          trialIndex++;
+        }
         setTimeout(() => {
           resetGame();
         }, 500);
       });
     });
 
-    // Optional keyboard support
-    document.addEventListener('keydown', (e) => {
-      const key = parseInt(e.key);
-      if (!isNaN(key) && key >= 1 && key <= 5) {
-        const index = key - 1;
-        if (!canClick) {
-          showMessage('Not yet!');
-          return;
-        }
-
-        const movementTime = releaseTime ? (performance.now() - releaseTime) : null;
-        const correct = index === activeIndex;
-        showMessage(correct ? 'Correct!' : 'Wrong!');
-
-        liveSend({
-          trial_index: trialIndex,
-          movement_time: movementTime ? movementTime.toFixed(2) : null,
-          clicked_index: index,
-          is_correct: correct
-        });
-
-        trialIndex++;
-        setTimeout(() => {
-          resetGame();
-        }, 500);
-      }
-    });
   </script>
 </body>
 

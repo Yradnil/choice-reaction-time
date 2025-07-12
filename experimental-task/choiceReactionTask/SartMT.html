@@ -3,75 +3,8 @@ SART MT
 {{ endblock }}
 {{ block content }}
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SART Reaction Test</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f0f0f0;
-    }
-
-    .circle-container {
-      position: relative;
-      width: 400px;
-      height: 400px;
-    }
-
-    .circle-button {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 24px;
-      font-weight: bold;
-      color: #000;
-      border: 1px solid #333;
-      background-color: gray;
-      position: absolute;
-      top: 170px;
-      left: 170px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    #center-circle {
-      top: 120px;
-      left: 170px;
-      width: 60px;
-      height: 60px;
-      background-color: gray;
-      border: 1px solid #333;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-      font-size: 24px;
-      color: black;
-      text-align: center;
-      cursor: pointer;
-      position: absolute;
-    }
-
-    #hold-button {
-      top: 310px;
-      left: 170px;
-      width: 60px;
-      height: 60px;
-      background-color: white;
-      border: 1px solid #333;
-      border-radius: 50%;
-      cursor: pointer;
-      position: absolute;
-    }
-  </style>
-</head>
+{% load otree static %}
+<link rel="stylesheet" href="{% static 'global/style1.css' %}"/>
 
 <body>
   <div class="circle-container">
@@ -88,7 +21,11 @@ SART MT
     let isGreen = false;
     let showingFeedback = false;
     let intervalId = null;
+    let trialIndex = 0;
     let cycleStarted = false;
+    let rtStartTime = 0;
+    let lastClick = performance.now(); 
+    let rt = 0;
 
     function setRandomColor() {
       if (showingFeedback) return;
@@ -96,6 +33,9 @@ SART MT
       const colorIndex = Math.floor(Math.random() * colors.length);
       currentColor = colors[colorIndex];
       isGreen = (currentColor === '#005000');
+      if (isGreen) {
+        rtStartTime = performance.now();
+      }
       centerCircle.style.backgroundColor = currentColor;
       centerCircle.innerText = '3';
     }
@@ -103,25 +43,24 @@ SART MT
     function showMessage(message) {
       showingFeedback = true;
       centerCircle.innerText = message;
-
+      // The next color will appear automatically from the ongoing interval
       setTimeout(() => {
         showingFeedback = false;
-        // Do not reset or re-initiate anything here
-        // The next color will appear automatically from the ongoing interval
       }, 1000);
     }
 
     function handleResponse() {
-      if (showingFeedback || !cycleStarted) return;
+      rt = performance.now() - lastClick;
+      if (showingFeedback || !cycleStarted) return; //???
 
       if (isGreen) {
         showMessage('Correct!');
+        liveSend({ leave_time: rt, trial_index: trialIndex });
+        trialIndex++;
       } else {
         showMessage('Wrong!');
       }
     }
-
-    //Event Listeners
 
     centerCircle.addEventListener('click', handleResponse);
 
@@ -141,8 +80,10 @@ SART MT
     });
 
     holdButton.addEventListener('mouseup', () => {
+      lastClick = performance.now();
+      const rtLeave = performance.now() - rtStartTime
+      liveSend({ leave_time: rtLeave, trial_index: trialIndex });
       holdButton.style.boxShadow = 'none';
-      // Do NOT reset anything here — just end the visual feedback
     });
   </script>
 

@@ -135,7 +135,7 @@ Choice Reaction Time Distractor
         activeIndex = Math.floor(Math.random() * circles.length);
       }
 
-      circles.forEach((circle, i) => {
+      circleElements.forEach((circle, i) => {
         const color = (i === activeIndex && showGreen)
           ? GREEN
           : COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -163,9 +163,7 @@ Choice Reaction Time Distractor
       inputEnabled = false;
       clearTimeout(missTimeout);
 
-      const reversedIndex = circleElements.length - 1 - index;
-
-      if (reversedIndex === activeIndex) {
+      if (index === activeIndex) {
         showMessage("Correct!");
       } else {
         showMessage("Wrong!");

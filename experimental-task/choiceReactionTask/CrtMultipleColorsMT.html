@@ -109,6 +109,10 @@ Choice Reaction Time multiple color with movement time
     let holding = false;
     let canClick = false;
     let holdTimeout;
+    let trialIndex = 0;
+    let rt = 0;
+    let rtStartTime = 0;
+    let lastClick = performance.now();
 
     function showMessage(text) {
       centerCircle.innerText = text;
@@ -137,7 +141,7 @@ Choice Reaction Time multiple color with movement time
       activeIndex = getRandomIndex();
       circleElements[activeIndex].classList.add('active');
       circleElements[activeIndex].style.backgroundColor = '#005000';
-
+      rtStartTime = performance.now();
       const otherIndices = circleElements.map((_, i) => i).filter(i => i !== activeIndex);
       const shuffledColors = colors.sort(() => Math.random() - 0.5);
 
@@ -167,6 +171,9 @@ Choice Reaction Time multiple color with movement time
         showMessage('Too early!');
         resetGame();
       }
+      lastClick = performance.now();
+      const rtLeave = performance.now() - rtStartTime
+      liveSend({ leave_time: rtLeave, trial_index: trialIndex });
       holding = false;
       clearTimeout(holdTimeout);
       centerCircle.style.backgroundColor = 'white';
@@ -188,6 +195,9 @@ Choice Reaction Time multiple color with movement time
           return;
         }
         if (index === activeIndex && !holding) {
+          rt = performance.now() - lastClick;
+          liveSend({ leave_time: rt, trial_index: trialIndex });
+          trialIndex++;
           showMessage('Correct!');
           setTimeout(() => {
             resetGame();
@@ -199,25 +209,6 @@ Choice Reaction Time multiple color with movement time
       });
     });
 
-    // Optional: also support keys 1–5
-    document.addEventListener('keydown', (e) => {
-      const key = parseInt(e.key);
-      if (!isNaN(key) && key >= 1 && key <= 5) {
-        if (!canClick) {
-          showMessage('Not yet!');
-          return;
-        }
-        if (key - 1 === activeIndex && !holding) {
-          showMessage('Correct!');
-          setTimeout(() => {
-            resetGame();
-          }, 500);
-        } else {
-          showMessage('Wrong!');
-          resetGame();
-        }
-      }
-    });
   </script>
 </body>
 
