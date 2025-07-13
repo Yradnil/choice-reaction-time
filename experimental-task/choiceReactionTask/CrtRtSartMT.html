@@ -175,7 +175,7 @@ Choice Reaction Time RT SART movement time
         showMessage("Wrong!");
         stopCycle();
       } else if (index === activeIndex) {
-        liveSend({ leave_time: rt, trial_index: trialIndex });
+        liveSend({ response_time: rt, trial_index: trialIndex });
         trialIndex++;
         showMessage("Correct!");
         stopCycle();

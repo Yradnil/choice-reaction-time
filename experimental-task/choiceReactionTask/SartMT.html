@@ -55,7 +55,7 @@ SART MT
 
       if (isGreen) {
         showMessage('Correct!');
-        liveSend({ leave_time: rt, trial_index: trialIndex });
+        liveSend({ response_time: rt, trial_index: trialIndex });
         trialIndex++;
       } else {
         showMessage('Wrong!');

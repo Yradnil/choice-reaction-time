@@ -190,7 +190,7 @@ Choice Reaction On Color movement time
         showMessage(correct ? 'Correct!' : 'Wrong!');
         if (correct) {
           rt = performance.now() - lastClick;
-          liveSend({ leave_time: rt, trial_index: trialIndex });
+          liveSend({ response_time: rt, trial_index: trialIndex });
           trialIndex++;
         }
         setTimeout(() => {

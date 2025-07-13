@@ -196,9 +196,9 @@ Choice Reaction Time multiple color with movement time
         }
         if (index === activeIndex && !holding) {
           rt = performance.now() - lastClick;
-          liveSend({ leave_time: rt, trial_index: trialIndex });
+          liveSend({ response_time: rt, trial_index: trialIndex });
           trialIndex++;
-          showMessage('Correct!');
+          showMessage('Correct! nice');
           setTimeout(() => {
             resetGame();
           }, 500);
