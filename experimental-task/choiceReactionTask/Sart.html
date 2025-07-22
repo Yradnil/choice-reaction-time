@@ -4,7 +4,7 @@ SART
 {{ block content }}
 
 {% load otree static %}
-<link rel="stylesheet" href="{% static 'global/style1.css' %}"/>
+<link rel="stylesheet" href="{% static 'global/style1.css' %}" />
 
 <body>
   <div class="circle-container">
@@ -20,6 +20,7 @@ SART
     let showingFeedback = false;
     let stimulusShownAt = null;
     let trialIndex = 0;
+    let intervalId = 0;
 
     function setRandomColor() {
       if (showingFeedback) return;
@@ -62,6 +63,8 @@ SART
 
       showMessage(correct ? 'Correct!' : 'Wrong!');
       trialIndex++;
+      clearInterval(intervalId);
+      intervalId = setInterval(setRandomColor, 2000); // change every 2s
     }
 
     centerCircle.addEventListener('click', handleResponse);
@@ -72,8 +75,8 @@ SART
       }
     });
 
-    setInterval(setRandomColor, 2000); // change every 2s
-    setRandomColor();
+    intervalId = setInterval(setRandomColor, 2000); // change every 2s
+
   </script>
 </body>
 

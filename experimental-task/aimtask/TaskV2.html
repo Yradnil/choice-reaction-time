@@ -103,14 +103,6 @@ Task
     <div id="game">
         <div id="info">Targets hit: 0 | Time left: 0.00s</div>
 
-        <div id="settings">
-            Duration:
-            <input type="range" id="durationSlider" min="5" max="60" value="30" />
-            <span id="durationValue">30</span> seconds<br>
-            Choices:
-            <input type="range" id="choiceSlider" min="2" max="10" value="4" />
-            <span id="choiceValue">4</span> targets
-        </div>
 
         <div id="result"></div>
         <button id="startBtn" type="button">Start Aim Trainer</button>
@@ -124,18 +116,12 @@ Task
         const nextBtn = document.getElementById("nextBtn");
         const result = document.getElementById("result");
 
-        const durationSlider = document.getElementById("durationSlider");
-        const durationValue = document.getElementById("durationValue");
 
-        const choiceSlider = document.getElementById("choiceSlider");
-        const choiceValue = document.getElementById("choiceValue");
-
-        let targetsHit = 0;
-        let gameDuration = 30;
-        let numChoices = 4;
-        let intervalId = null;
+        let gameDuration = 30;  // fixed
         let endTime = null;
         let trialIndex = 0;
+        let targetsHit = 0;
+        let positions = []; // store existing positions to prevent overlap
 
         let lastSpawnTime = null;   // this will store the timestamp when each red target spawns
 
@@ -144,63 +130,74 @@ Task
             startGame();
         });
 
-        // below we have slider eventlisteners updating in realtime with what game settings we want to start with
-        durationSlider.addEventListener("input", () => {
-            durationValue.textContent = durationSlider.value;
-        });
-
-        choiceSlider.addEventListener("input", () => {
-            choiceValue.textContent = choiceSlider.value;
-        });
-
         function random(pMin, pMax) {
             return Math.random() * (pMax - pMin + 1) + pMin;
         }
 
+        function getDistanceFromMouse(x, y, mouseX, mouseY) {
+            const dx = x - mouseX;
+            const dy = y - mouseY;
+
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
         function clearTargets() {
             document.querySelectorAll(".target").forEach(el => el.remove());
+            positions.length = 0;
+        }
+
+        function getWidth(nChoices, distance) {
+            const targetTime = 600;
+            const a = 100 * Math.log2(nChoices + 1);
+            const b = targetTime - a;
+            const width = distance / (Math.pow(2, b / 150) - 1);
+            return Math.max(10, Math.min(150, width)); // clamp width to keep circles visible
+        }
+
+        function checkPositions(x, y, targetSize) {
+            let attempts = 0;
+            do {
+                attempts++;
+            } while (
+                positions.some(pos =>
+                    Math.hypot(pos.x - x, pos.y - y) < targetSize * 1.1
+                ) && attempts < 50
+            );
+            positions.push({ x, y }); //adds coordinates into our array
         }
 
         function spawnTargets() {
             clearTargets();
 
             const gameRect = game.getBoundingClientRect();
-            const targetSize = random(30, 80);
+            const n = Math.floor(random(2, 8)); // random number of targets
             const marginRatio = 0.05; //5% inside the game rectangle
 
             const minX = gameRect.width * marginRatio;
-            const maxX = gameRect.width * (1 - marginRatio) - targetSize;
+            const maxX = gameRect.width * (1 - marginRatio) - 80;
 
             const minY = gameRect.height * marginRatio;
-            const maxY = gameRect.height * (1 - marginRatio) - targetSize;
+            const maxY = gameRect.height * (1 - marginRatio) - 80;
 
-            const positions = []; // store existing positions to prevent overlap
-
-            for (let i = 0; i < numChoices; i++) {
+            for (let i = 0; i < n; i++) {
                 const newTarget = document.createElement("div");
                 newTarget.classList.add("target");
 
-                newTarget.style.width = `${targetSize}px`;
-                newTarget.style.height = `${targetSize}px`;
-
                 // find a non‐overlapping (x,y) for this circle
-                let x, y, attempts = 0;
-                do {
-                    x = random(minX, maxX);
-                    y = random(minY, maxY);
-                    attempts++;
-                } while (
-                    positions.some(pos =>
-                        Math.hypot(pos.x - x, pos.y - y) < targetSize * 1.1
-                    ) && attempts < 50
-                );
-                positions.push({ x, y }); //adds coordinates into our array
+                let x = random(minX, maxX); 
+                let y = random(minY, maxY);
 
                 newTarget.style.left = `${x}px`;
                 newTarget.style.top = `${y}px`;
 
                 // The first element in this loop is the actual target
                 if (i === 0) {
+                    let distance = getDistanceFromMouse(x, y, event.clientX, event.clientY);
+                    targetSize = getWidth(n, distance);
+                    checkPositions(x, y, targetSize)
+                    newTarget.style.left = `${x}px`;
+                    newTarget.style.top = `${y}px`;
+
                     newTarget.style.background = "red";
 
                     // record the spawn time, so we can compute response time when clicked
@@ -211,55 +208,45 @@ Task
                         targetsHit++;
                         updateInfo();
 
-                        // Send response_time
+                        // Send overall response time
                         liveSend({ response_time: responseTime, trial_index: trialIndex });
 
-                        // below we create a dotted circle to check if the reaction time circle is working
                         const clickX = event.clientX;
                         const clickY = event.clientY;
-                        
-                        /*
-                        // Create the visible circle
-                        const circle = document.createElement("div");
-                        circle.style.position = "fixed";
-                        circle.style.width = "50px";
-                        circle.style.height = "50px";
-                        circle.style.border = "2px dashed blue";
-                        circle.style.borderRadius = "50%";
-                        circle.style.pointerEvents = "none";
-                        circle.style.left = `${clickX - 25}px`;
-                        circle.style.top = `${clickY - 25}px`;
-                        circle.style.zIndex = "10001";
-                        circle.style.backgroundColor = "rgba(0, 0, 255, 0.05)";
-                        document.body.appendChild(circle);
-                        */
+
                         const rtStartTime = performance.now();
 
+                        // records reaction time
                         function onMove(e) {
                             const dx = e.clientX - clickX;
                             const dy = e.clientY - clickY;
                             const dist = Math.sqrt(dx * dx + dy * dy);
 
-                            if (dist > 25) {
+                            if (dist > 10) {
                                 const rtLeave = performance.now() - rtStartTime;
                                 liveSend({ leave_time: rtLeave, trial_index: trialIndex });
 
                                 document.body.removeChild(circle);
                                 window.removeEventListener("mousemove", onMove);
-
-                                trialIndex++;  // increment only after reaction time is captured
                             }
                         }
 
                         window.addEventListener("mousemove", onMove);
+                        trialIndex++;  // increment only after reaction time is captured
 
                         // Spawn next set of targets immediately after actual target was clicked
                         spawnTargets();
                     });
 
-                } else {
+                } else { //circles that are not the target
                     newTarget.style.background = "#005000";
+                    targetSize = random(30, 80);
+                    checkPositions(x, y, targetSize)
+                    newTarget.style.left = `${x}px`;
+                    newTarget.style.top = `${y}px`;
                 }
+                newTarget.style.width = `${targetSize}px`;
+                newTarget.style.height = `${targetSize}px`;
 
                 game.appendChild(newTarget);
             }
@@ -271,7 +258,6 @@ Task
         }
 
         function endGame() {
-            clearInterval(intervalId);
             clearTargets();
 
             result.innerHTML = `You hit ${targetsHit} targets in ${gameDuration} seconds!`;
@@ -282,9 +268,7 @@ Task
 
         function startGame() {
             targetsHit = 0;
-            gameDuration = parseInt(durationSlider.value);
-            numChoices = parseInt(choiceSlider.value);
-            endTime = performance.now() + gameDuration * 1000;
+            endTime = performance.now() + 30 * 1000;
 
             startBtn.style.display = "none";
             result.style.display = "none";
