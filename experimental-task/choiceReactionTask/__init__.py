@@ -325,4 +325,4 @@ class SartMT(Page):
         player.timings_json = json.dumps(existing)
 
 
-page_sequence = [Sart, ResultsWaitPage, Results]
+page_sequence = [ReactionTimeMT, ResultsWaitPage, Results]

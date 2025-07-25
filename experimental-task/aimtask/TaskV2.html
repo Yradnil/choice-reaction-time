@@ -154,23 +154,28 @@ Task
             return Math.max(10, Math.min(150, width)); // clamp width to keep circles visible
         }
 
+        function isOverlapping(x, y, targetSize) {
+            return positions.some(pos => {
+                const dist = Math.hypot(pos.x - x, pos.y - y);
+                return dist < (pos.targetSize + targetSize) / 2 + 2; // small buffer
+            });
+        }
+
         function checkPositions(x, y, targetSize) {
-            let attempts = 0;
-            do {
-                attempts++;
-            } while (
-                positions.some(pos =>
-                    Math.hypot(pos.x - x, pos.y - y) < targetSize * 1.1
-                ) && attempts < 50
-            );
-            positions.push({ x, y }); //adds coordinates into our array
+            if (!isOverlapping(x, y, targetSize)) {
+                positions.push({ x, y, targetSize });
+                return true;
+            } else {
+                console.log("there is an overlapp");
+                return false;
+            }
         }
 
         function spawnTargets() {
             clearTargets();
 
             const gameRect = game.getBoundingClientRect();
-            const n = Math.floor(random(2, 8)); // random number of targets
+            const n = Math.floor(random(2, 6)); // random number of targets
             const marginRatio = 0.05; //5% inside the game rectangle
 
             const minX = gameRect.width * marginRatio;
@@ -178,27 +183,27 @@ Task
 
             const minY = gameRect.height * marginRatio;
             const maxY = gameRect.height * (1 - marginRatio) - 80;
+            const colors = ['#FFCC00', '#90D050', '#3C5DAE', '#7A8DBE', '#3DDC84'];
+            const shuffledColors = colors.sort(() => 0.5 - Math.random());
 
             for (let i = 0; i < n; i++) {
+                let targetSize;
                 const newTarget = document.createElement("div");
                 newTarget.classList.add("target");
 
                 // find a non‐overlapping (x,y) for this circle
-                let x = random(minX, maxX); 
+                let x = random(minX, maxX);
                 let y = random(minY, maxY);
-
-                newTarget.style.left = `${x}px`;
-                newTarget.style.top = `${y}px`;
 
                 // The first element in this loop is the actual target
                 if (i === 0) {
                     let distance = getDistanceFromMouse(x, y, event.clientX, event.clientY);
                     targetSize = getWidth(n, distance);
-                    checkPositions(x, y, targetSize)
-                    newTarget.style.left = `${x}px`;
-                    newTarget.style.top = `${y}px`;
+                    positions.push({ x, y, targetSize });
+                    newTarget.style.left = `${x - targetSize / 2}px`;
+                    newTarget.style.top = `${y - targetSize / 2}px`;
 
-                    newTarget.style.background = "red";
+                    newTarget.style.background = "#005000"; //green
 
                     // record the spawn time, so we can compute response time when clicked
                     lastSpawnTime = performance.now();
@@ -226,7 +231,6 @@ Task
                                 const rtLeave = performance.now() - rtStartTime;
                                 liveSend({ leave_time: rtLeave, trial_index: trialIndex });
 
-                                document.body.removeChild(circle);
                                 window.removeEventListener("mousemove", onMove);
                             }
                         }
@@ -239,17 +243,30 @@ Task
                     });
 
                 } else { //circles that are not the target
-                    newTarget.style.background = "#005000";
                     targetSize = random(30, 80);
-                    checkPositions(x, y, targetSize)
-                    newTarget.style.left = `${x}px`;
-                    newTarget.style.top = `${y}px`;
+                    let attempts = 0;
+                    while (attempts < 100) {
+                        if (!checkPositions(x, y, targetSize)) {
+                            console.log("generate new coords");
+                            x = random(minX, maxX);
+                            y = random(minY, maxY);
+                            attempts++;
+                        } else {
+                            break;
+                        }
+                    }
+                    newTarget.style.left = `${x - targetSize / 2}px`;
+                    newTarget.style.top = `${y - targetSize / 2}px`;
+
+                    const colorIndex = i - 1;
+                    newTarget.style.background = shuffledColors[colorIndex]
                 }
                 newTarget.style.width = `${targetSize}px`;
                 newTarget.style.height = `${targetSize}px`;
 
                 game.appendChild(newTarget);
             }
+            console.log("Current positions:", positions);
         }
 
         function updateInfo() {
