@@ -184,6 +184,7 @@ Task
         /*
         Uses isOverlapping() to check with our already generated circles
         If there is no overlapp, we add our current x, y and targetSize into our list.
+        Otherwise we generate new positions.
         */
         function checkPositions(minX, maxX, minY, maxY, targetSize) {
             let attempts = 0;
@@ -202,9 +203,12 @@ Task
             return null;
         }
 
+        /*
+        Calculates our borders based on the size of the circl we are having with a buffer.
+        */
         function calcBorders(targetSize) {
             const gameRect = game.getBoundingClientRect();
-            const marginRatio = 0.05; // 5% inside the game rectangle
+            const marginRatio = 0.1; // 10% inside the game rectangle
 
             const minX = gameRect.width * marginRatio;
             const maxX = gameRect.width * (1 - marginRatio) - targetSize;
@@ -283,7 +287,7 @@ Task
                     });
 
                 } else { //circles that are not the target
-                    targetSize = random(30, 80);
+                    targetSize = random(30, 120);
                     const borders = calcBorders(targetSize);
                     
                     const pos = checkPositions(borders.minX, borders.maxX, borders.minY, borders.maxY, targetSize);
