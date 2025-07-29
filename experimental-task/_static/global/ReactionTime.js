@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     centerCircle.addEventListener('click', handleClick);
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === ' ' || e.key === 'Enter') {
+        if (e.key === '3') {
             handleClick();
         }
     });

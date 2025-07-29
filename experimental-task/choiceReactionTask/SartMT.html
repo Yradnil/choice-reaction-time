@@ -25,34 +25,81 @@ SART MT
     let cycleStarted = false;
     let rtStartTime = 0;
     let lastClick = performance.now(); 
+    let colorCycleInterval = null;
+    let inputEnabled = false;
+    let awaitingResponse = false;
+    let missTimeout = null;
+    let timeoutId = null;
     let rt = 0;
 
-    function setRandomColor() {
+    function startTrial() {
+      startColorCycle();
+    }
+
+    function startColorCycle() {
+      showNextStimulus();
+    }
+
+    function showNextStimulus() {
       if (showingFeedback) return;
+
+      clearTimeout(missTimeout);
+      inputEnabled = true;
 
       const colorIndex = Math.floor(Math.random() * colors.length);
       currentColor = colors[colorIndex];
-      isGreen = (currentColor === '#005000');
+      isGreen = currentColor === "#005000";
+
+      centerCircle.style.backgroundColor = currentColor;
+      centerCircle.innerText = "3";
+
+      stimulusShownAt = isGreen ? performance.now() : null;
+      awaitingResponse = isGreen;
+
       if (isGreen) {
         rtStartTime = performance.now();
+        missTimeout = setTimeout(() => {
+          if (awaitingResponse) {
+            awaitingResponse = false;
+            inputEnabled = false;
+            showMessage("Missed!");
+          }
+        }, 2000);
       }
-      centerCircle.style.backgroundColor = currentColor;
-      centerCircle.innerText = '3';
+
+      // Instead of setInterval, chain next call manually:
+      timeoutId = setTimeout(() => {
+        if (!showingFeedback) {
+          showNextStimulus();
+        }
+      }, 2000);
     }
 
     function showMessage(message) {
       showingFeedback = true;
+      clearInterval(colorCycleInterval);
+      clearTimeout(missTimeout);
+      inputEnabled = false;
+
       centerCircle.innerText = message;
-      // The next color will appear automatically from the ongoing interval
+
       setTimeout(() => {
         showingFeedback = false;
-      }, 1000);
+        resetTrial();
+      }, 1000); // 1s feedback duration
+    }
+
+    function resetTrial() {
+      clearTimeout(timeoutId);
+      isGreen = false;
+      centerCircle.style.backgroundColor = "gray";
+      centerCircle.innerText = "";
     }
 
     function handleResponse() {
       rt = performance.now() - lastClick;
-      if (showingFeedback || !cycleStarted) return; //???
-
+      if (showingFeedback || !cycleStarted) return; 
+      cycleStarted = false;
       if (isGreen) {
         showMessage('Correct!');
         liveSend({ response_time: rt, trial_index: trialIndex });
@@ -64,26 +111,23 @@ SART MT
 
     centerCircle.addEventListener('click', handleResponse);
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === ' ' || e.key === 'Enter') {
-        handleResponse();
-      }
-    });
-
     holdButton.addEventListener('mousedown', () => {
       if (cycleStarted) return;
 
       cycleStarted = true;
-      holdButton.style.boxShadow = 'inset 0 0 5px rgba(0,0,0,0.5)';
-      setRandomColor();
-      intervalId = setInterval(setRandomColor, 2000); // keep going
+      holdButton.style.backgroundColor = 'gray';
+      startTrial();
     });
 
     holdButton.addEventListener('mouseup', () => {
       lastClick = performance.now();
       const rtLeave = performance.now() - rtStartTime
       liveSend({ leave_time: rtLeave, trial_index: trialIndex });
-      holdButton.style.boxShadow = 'none';
+      if (!isGreen) {
+        showMessage('Too early!');
+        cycleStarted = false;
+      }
+      holdButton.style.backgroundColor = 'white';
     });
   </script>
 

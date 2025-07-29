@@ -1,9 +1,5 @@
-{{ block title }}
-SART
-{{ endblock }}
-{{ block content }}
-
-{% load otree static %}
+{{ block title }} SART {{ endblock }} {{ block content }} {% load otree static
+%}
 <link rel="stylesheet" href="{% static 'global/style1.css' %}" />
 
 <body>
@@ -12,41 +8,104 @@ SART
   </div>
 
   <script>
-    const centerCircle = document.getElementById('center-circle');
-    const colors = ['#FFCC00', '#90D050', '#3C5DAE', '#7A8DBE', '#005000']; // last one is green
+    const centerCircle = document.getElementById("center-circle");
+    const colors = ["#FFCC00", "#90D050", "#3C5DAE", "#7A8DBE", "#005000"]; // last one is green
 
-    let currentColor = '';
+    let currentColor = "";
     let isGreen = false;
     let showingFeedback = false;
     let stimulusShownAt = null;
     let trialIndex = 0;
-    let intervalId = 0;
+    let missTimeout = null;
+    let colorCycleInterval = null;
+    let inputEnabled = false;
+    let awaitingResponse = false;
+    let timeoutId = null;
 
-    function setRandomColor() {
+    function startTrial() {
+      centerCircle.style.backgroundColor = "gray";
+      centerCircle.innerText = "";
+      setTimeout(() => {
+        startColorCycle();
+      }, 2000); // Initial gray delay
+    }
+
+    function startColorCycle() {
+      showNextStimulus();
+    }
+
+    function showNextStimulus() {
       if (showingFeedback) return;
+
+      clearTimeout(missTimeout);
+      inputEnabled = true;
 
       const colorIndex = Math.floor(Math.random() * colors.length);
       currentColor = colors[colorIndex];
-      isGreen = (currentColor === '#005000');
-      centerCircle.style.backgroundColor = currentColor;
-      centerCircle.innerText = '3';
+      isGreen = currentColor === "#005000";
 
-      // only record time if it’s green
+      centerCircle.style.backgroundColor = currentColor;
+      centerCircle.innerText = "3";
+
       stimulusShownAt = isGreen ? performance.now() : null;
+      awaitingResponse = isGreen;
+
+      if (isGreen) {
+        missTimeout = setTimeout(() => {
+          if (awaitingResponse) {
+            awaitingResponse = false;
+            inputEnabled = false;
+            sendTrialData(false, null);
+            showMessage("Missed!");
+          }
+        }, 2000);
+      }
+
+      // Instead of setInterval, chain next call manually:
+      timeoutId = setTimeout(() => {
+        if (!showingFeedback) {
+          showNextStimulus();
+        }
+      }, 2000);
     }
 
     function showMessage(message) {
       showingFeedback = true;
+      clearInterval(colorCycleInterval);
+      clearTimeout(missTimeout);
+      inputEnabled = false;
+
       centerCircle.innerText = message;
 
       setTimeout(() => {
         showingFeedback = false;
-        setRandomColor();
-      }, 1000);
+        resetAndRestartCycle();
+      }, 1000); // 1s feedback duration
+    }
+
+    function resetAndRestartCycle() {
+      clearTimeout(timeoutId);
+      isGreen = false;
+      centerCircle.style.backgroundColor = "gray";
+      centerCircle.innerText = "";
+      setTimeout(() => {
+        startColorCycle();
+      }, 2000); // 2s gray between trials
+    }
+
+    function sendTrialData(isCorrect, rt) {
+      liveSend({
+        trial_index: trialIndex,
+        is_correct: isCorrect,
+        reaction_time: rt !== null ? rt.toFixed(2) : null,
+      });
+      trialIndex++;
     }
 
     function handleResponse() {
-      if (showingFeedback) return;
+      if (!inputEnabled || showingFeedback) return;
+      inputEnabled = false;
+      awaitingResponse = false;
 
       let rt = null;
       let correct = isGreen;
@@ -55,32 +114,20 @@ SART
         rt = performance.now() - stimulusShownAt;
       }
 
-      liveSend({
-        trial_index: trialIndex,
-        is_correct: correct,
-        reaction_time: rt ? rt.toFixed(2) : null
-      });
-
-      showMessage(correct ? 'Correct!' : 'Wrong!');
-      trialIndex++;
-      clearInterval(intervalId);
-      intervalId = setInterval(setRandomColor, 2000); // change every 2s
+      sendTrialData(correct, rt);
+      showMessage(correct ? "Correct!" : "Wrong!");
     }
 
-    centerCircle.addEventListener('click', handleResponse);
+    centerCircle.addEventListener("click", handleResponse);
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === ' ' || e.key === 'Enter') {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "3") {
         handleResponse();
       }
     });
 
-    intervalId = setInterval(setRandomColor, 2000); // change every 2s
-
+    startTrial();
   </script>
 </body>
 
-{{ formfields }}
-{{ next_button }}
-
-{{ endblock }}
+{{ formfields }} {{ next_button }} {{ endblock }}
