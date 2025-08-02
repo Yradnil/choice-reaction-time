@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         centerCircle.style.backgroundColor = 'gray';
 
         // Delay before showing green
-        const delay = Math.random() * 6000 + 1000;
+        const delay = Math.random() * 3000 + 1000; 
         timeoutId = setTimeout(() => {
             centerCircle.style.backgroundColor = '#005000';
             isGreen = true;

@@ -300,7 +300,7 @@ class ReactionTimeMT(Page):
 class SartMT(Page):
     @staticmethod
     def live_method(player: Player, data):
-        rt = data.get('response_time')
+        mt = data.get('movement_time')
         reactionT = data.get('leave_time')
         idx = str(data.get('trial_index'))
 
@@ -317,12 +317,12 @@ class SartMT(Page):
         if idx not in existing:
             existing[idx] = {}
 
-        if rt is not None:
-            existing[idx]["response_time"] = rt
+        if mt is not None:
+            existing[idx]["movement_time"] = mt
         if reactionT is not None:
             existing[idx]["reaction_time"] = reactionT
 
         player.timings_json = json.dumps(existing)
 
 
-page_sequence = [CrtOneColor, ResultsWaitPage, Results]
+page_sequence = [ReactionTimeMT, ResultsWaitPage, Results]

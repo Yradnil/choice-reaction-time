@@ -26,6 +26,7 @@ body {
   background-color: gray;
   cursor: pointer;
   position: absolute;
+  user-select: none;
 }
 
 #center-circle {

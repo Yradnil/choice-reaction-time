@@ -17,7 +17,6 @@
     let stimulusShownAt = null;
     let trialIndex = 0;
     let missTimeout = null;
-    let colorCycleInterval = null;
     let inputEnabled = false;
     let awaitingResponse = false;
     let timeoutId = null;
@@ -64,14 +63,13 @@
       // Instead of setInterval, chain next call manually:
       timeoutId = setTimeout(() => {
         if (!showingFeedback) {
-          showNextStimulus();
+          resetAndRestartCycle();
         }
       }, 2000);
     }
 
     function showMessage(message) {
       showingFeedback = true;
-      clearInterval(colorCycleInterval);
       clearTimeout(missTimeout);
       inputEnabled = false;
 
